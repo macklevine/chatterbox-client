@@ -25,11 +25,14 @@
         <br>
         <input type="text" name="roomname" value="Roomname" id="roomname">
         <br>
-        <input type="button" value="Post" onclick="makeMessage()">
+        <input type="button" value="Post" onclick="app.makeMessage()">
       </form>
     </div>
-    <div class="messageFeed chat">
-    <!-- <input type="button" value="Get Messages" onclick="getMessagesFromServer()"> -->
+    <div>
+      <select class="rooms">
+      </select>
+    </div>
+    <div class="messageFeed chat" id="chats">
     </div>
   </body>
 </html>
