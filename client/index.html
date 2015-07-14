@@ -29,7 +29,8 @@
       </form>
     </div>
     <div>
-      <select class="rooms">
+      <select class="rooms" onchange="app.filterMessages()">
+        <option selected="selected">Select a Room...</option>
       </select>
     </div>
     <div class="messageFeed chat" id="chats">

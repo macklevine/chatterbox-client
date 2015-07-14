@@ -1,7 +1,7 @@
 // YOUR CODE HERE:
 
-//var ourScript = '<script>$(&quot;body&quot;).text(&quot;<img src=&quot;http://38.media.tumblr.com/a9c039cda3c688a820dd6a642e72404a/tumblr_nrfblwWSch1tz9mcyo1_500.gif&quot;/>&quot;)</script>';
 var allMessagesOnServer;
+var selected;
 
 $(document).ready(function(){
   app.init();
@@ -12,7 +12,7 @@ var app = {};
 app.init = function(){
   setInterval(function(){app.fetch();}, 1000);
 }
-//
+
 
 app.fetch = function(){
   $.ajax({
@@ -34,33 +34,67 @@ app.fetch = function(){
   });
 };
 
+var rooms = {};
+
 app.appendDataToFeed = function(allMessagesOnServer){
   $(".messageFeed").text("");
   var theMessages = allMessagesOnServer["results"];
   for (var i = 0; i < theMessages.length; i++){
-    $(".messageFeed").append('<div class="postedMessage message' + i +'"></div>');
-    $(".message" + i).text(allMessagesOnServer.results[i].username + ": " + allMessagesOnServer.results[i].text);
-  }
-  var rooms = {}; //may want to make this an object
+    $(".messageFeed").append('<div class="postedMessage message' + i +'" data-room-name="' + theMessages[i].roomname + '"></div>');
+    $(".message" + i).text(theMessages[i].username + ": " + theMessages[i].text);
+    if($(".message" + i).data("room-name") === selected){
+      $(".message" + i).hide();
+    }
+  } //may want to make this an object
+
+  //ultimately, refactor the below out into their own functions called within the body of appendDataToFeed.
   for (var j = 0; j < theMessages.length; j++){
     if ("roomname" in theMessages[j]){
-      if (!theMessages[j].roomname in rooms){
-        rooms[theMessages[j].roomname] = theMessages[j].roomname;
-        //check to see if a given room is in the selection before we append it as a child to the node.
-      }
+      rooms[theMessages[j].roomname] = theMessages[j].roomname;
     }
   }
   for (var key in rooms){
-    //if (!$('.rooms').children().each()) FIND A WAY TO ITERATE OVER THE CHILDREN OF .rooms TO TEST FOR PRESENCE OF KEY.
-    //if the key isn't there, let's append the key as a child element of the.rooms node.
-    $('.rooms').append('<option value="'+ key +'">'+ key +'</option>');
-  }
-  //console.log(rooms);
+    var found = false;
+    for (j = 0; j < $(".rooms").children().length; j++){
+      if ($(".rooms").children()[j].value === rooms[key] || /["]/.test($(".rooms").children()[j].value) || $(".rooms").children()[j].value === null){ //if some jackass uses null w/o quotes, write a new test
+        found = true;
+        //break;
+      }
+    }
+    if (!found){
+      $('.rooms').append('<option value="'+ rooms[key] +'">'+ rooms[key] +'</option>');
+    }
+  };
+  //eventually, factor out the above...
+
 };
 
 app.clearMessages = function(){
   $("#chats").text("");
   //debugger;
+}
+
+app.filterMessages = function(){
+  //ultimately, appendDataToFeed should check what room is selected ("selected" can eventually be moved to the global scope), append all messages, and hide() any appended divs that do not match
+//the value of var selected
+  var menu = document.getElementsByClassName("rooms")[0];
+  selected = menu.options[menu.selectedIndex].value; //does this get what we want?
+  if (selected === "Select a room..."){
+    return; //test this...
+  }
+  var messageDivsInFeed = $("#chats").children();
+  _.each(messageDivsInFeed, function(div){
+    if ($(div).data("room-name") !== selected){
+      $(div).hide();
+    }
+  });
+
+  // for (var i = 0; i < $(".postedMessage").length; i++){
+  //   if ($(".postedMessage")[i] !== selected){
+  //     $(".postedMessage")[i].hide();
+  //   }
+  // }
+
 }
 
 app.send = function(message){
@@ -82,19 +116,13 @@ app.send = function(message){
 
 app.makeMessage = function(){
   var userName = document.getElementById("username").value;
-  //debugger;
   var currentMessage = document.getElementById("messagetext").value;
   var roomname = document.getElementById("roomname").value;
   var message = new Message(userName, currentMessage, roomname);
-  //debugger;
-  //$("body").append("<div>" + message.text + "</div>");
   app.send(message);
-  //return message;
-  //add functionality later to actually use a ajax post request with JSON.stringify(message)
 };
 
 var Message = function(username, text, roomname){
-  //debugger;
   this.username = username;
   this.text = text;
   this.roomname = roomname;
